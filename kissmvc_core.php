@@ -24,13 +24,22 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************/
+
+/*****************************************************************
+{kissmvc_mn.php хувилбар 0.1}
+Khaschuluu Munkhbayar <khaschuluu.m@gmail.com> https://github.com/khaschuluu/kissmvc_mn
+
+Монгол хэл дээр нутагшуулахад зориулан MIT лицензийг баримтлан
+мөчирлөж авсан хувилбар.
+*****************************************************************/
+
 //===============================================================
 // Controller
-// Parses the HTTP request and routes to the appropriate function
+// HTTP хүсэлтийг боловсруулан, чиглэлийг авах болгох функц
 //===============================================================
 abstract class KISS_Controller {
-	protected $controller_path='../app/controllers/'; //with trailing slash
-	protected $web_folder='/'; //with trailing slash
+	protected $controller_path='../app/controllers/'; //мөчирлүүлэх налуу тэмдэгттэй
+	protected $web_folder='/'; //мөчирлүүлэх налуу тэмдэгттэй
 	protected $request_uri_parts=array();
 	protected $controller;
 	protected $action;
@@ -45,15 +54,15 @@ abstract class KISS_Controller {
 	}
 
 	function explode_http_request() {
-		$requri = $_SERVER['REQUEST_URI'];  // $_SERVER['REQUEST_URI'] нь серверлүү ирсэн URI хүсэлтийн утгыг авдаг
-		// Хэрвээ $requri (URI хүсэлт) дотор $web_folder утга хамгийн эхэнд байх юм бол хасаж байна
+		$requri = $_SERVER['REQUEST_URI'];  // URI хүсэлт.
+		// URI хүсэлтийн root зам ($web_folder) аас хойших хэсгийг салгаж авна.
 		if (strpos($requri,$this->web_folder)===0)
 			$requri=substr($requri,strlen($this->web_folder));
-		$this->request_uri_parts = $requri ? explode('/',$requri) : array();
+		$this->request_uri_parts = $requri ? explode('/',$requri) : array();  // Хэрэглэгчийн хүсэлтийг / тэмдэгтээр салгана.
 		return $this;
 	}
 
-	//This function parses the HTTP request to get the controller name, action name and parameter array.
+	//Энэ функц нь HTTP хүсэлтийг боловсруулан, controller-ийн нэр, үйлдэл болон параметрийг авна.
 	function parse_http_request() {
 		$this->params = array();
 		$p = $this->request_uri_parts;
@@ -66,7 +75,7 @@ abstract class KISS_Controller {
 		return $this;
 	}
 
-	//This function maps the controller name and action name to the file location of the .php file to include
+	//Энэ функц нь controller-ийн нэрээр замчлан, үйлдлийн нэрийг .php файлын байршил болгоод тухайн файлыг зарлана.
 	function route_request() {
 		$controllerfile=$this->controller_path.$this->controller.'/'.$this->action.'.php';
 		if (!preg_match('#^[A-Za-z0-9_-]+$#',$this->controller) || !file_exists($controllerfile))
@@ -81,7 +90,7 @@ abstract class KISS_Controller {
 		return $this;
 	}
 
-	//Override this function for your own custom 404 page
+	//Энэ функцийг өөрийн 404 хуудсанд зориулан дахин тодорхойлно уу.
 	function request_not_found($msg='') {
 		header("HTTP/1.0 404 Not Found");
 		die('<html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>'.$msg.'<p>The requested URL was not found on this server.</p><p>Please go <a href="javascript: history.back(1)">back</a> and try again.</p><hr /><p>Powered By: <a href="http://kissmvc.com">KISSMVC</a></p></body></html>');
@@ -90,8 +99,9 @@ abstract class KISS_Controller {
 
 //===============================================================
 // View
-// For plain .php templates
+// .php тэмплэйтүүдийг зохион байгуулах.
 //===============================================================
+
 abstract class KISS_View {
 	protected $file='';
 	protected $vars=array();
@@ -113,7 +123,7 @@ abstract class KISS_View {
 		return $this;
 	}
 
-	//for adding to an array
+	//жагсаалтруу нэмэх
 	function add($key,$var) {
 		$this->vars[$key][]=$var;
 	}
@@ -165,7 +175,9 @@ abstract class KISS_View {
 
 //===============================================================
 // Model/ORM
-// Requires a function getdbh() which will return a PDO handler
+// getdbh() функц нь хүсэлтэд PDO боловсруулагчийг буцаах учир
+// зайлшгүй шаардлагатай
+/*
 function getdbh() {
 	if (!isset($GLOBALS['dbh']))
 		try {
@@ -176,20 +188,21 @@ function getdbh() {
 		}
 	return $GLOBALS['dbh'];
 }
+*/
 //===============================================================
 abstract class KISS_Model  {
 
 	protected $pkname;
 	protected $tablename;
 	protected $dbhfnname;
-	protected $QUOTE_STYLE='MYSQL'; // valid types are MYSQL,MSSQL,ANSI
+	protected $QUOTE_STYLE='MYSQL'; // MYSQL,MSSQL,ANSI гэсэн төрлүүд хүчинтэй
 	protected $COMPRESS_ARRAY=true;
-	public $rs = array(); // for holding all object property variables
+	public $rs = array(); // объектийн бүх гишүүн хувьсагчдыг агуулна
 
 	function __construct($pkname='',$tablename='',$dbhfnname='getdbh',$quote_style='MYSQL',$compress_array=true) {
-		$this->pkname=$pkname; //Name of auto-incremented Primary Key
-		$this->tablename=$tablename; //Corresponding table in database
-		$this->dbhfnname=$dbhfnname; //dbh function name
+		$this->pkname=$pkname; //Автомат дугаарлалттай Primary Key-ийн нэр
+		$this->tablename=$tablename; //Зохих бааз дахь хүснэгт
+		$this->dbhfnname=$dbhfnname; //dbh функцийн нэр
 		$this->QUOTE_STYLE=$quote_style;
 		$this->COMPRESS_ARRAY=$compress_array;
 	}
@@ -225,8 +238,8 @@ abstract class KISS_Model  {
 			return '"'.$name.'"';
 	}
 
-	//Inserts record into database with a new auto-incremented primary key
-	//If the primary key is empty, then the PK column should have been set to auto increment
+	//Бичилтүүдийг primary key-ийн автомат нэмэгдүүлэлттэйгээр баазруу хийх
+	//Хэрвээ primary key хоосон үед PK багна нь автомат нэмэгдүүлэлтийг хэрэглэх болно
 	function create() {
 		$dbh=$this->getdbh();
 		$pkname=$this->pkname;
